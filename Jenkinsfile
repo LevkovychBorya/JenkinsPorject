@@ -18,9 +18,9 @@ pipeline {
                echo 'Here Maven is going to Test Java application.'
            }
         }
-        stage('Test Stage') {
+        stage('Deploy Stage') {
            steps {
-               echo 'Here Maven is going to Test Java application.'
+               echo 'Here Maven is going to deploy Java application.'
            }
         }
     }
