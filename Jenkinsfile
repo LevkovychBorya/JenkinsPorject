@@ -1,7 +1,11 @@
 pipeline {
     agent any
     triggers { 
-        pollSCM('* * * * *') 
+        pollSCM('* * * * *')
+    }
+    options { 
+        buildDiscarder(logRotator(numToKeepStr: '1'))
+        disableConcurrentBuilds() 
     } 
     stages {
         stage('First Stage') {
@@ -11,3 +15,4 @@ pipeline {
         }
     }
 }
+#hello
