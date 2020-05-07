@@ -1,17 +1,27 @@
 pipeline {
     agent any
-    triggers { 
+    triggers {
         pollSCM('* * * * *')
     }
-    options { 
+    options {
         buildDiscarder(logRotator(numToKeepStr: '1'))
-        disableConcurrentBuilds() 
-    } 
+        disableConcurrentBuilds()
+    }
     stages {
-        stage('First Stage') {
+        stage('Build Stage') {
             steps {
-                echo 'Hello world!' 
+                echo 'Here Maven is going to build Java application.'
             }
+        }
+        stage('Test Stage') {
+           steps {
+               echo 'Here Maven is going to Test Java application.'
+           }
+        }
+        stage('Test Stage') {
+           steps {
+               echo 'Here Maven is going to Test Java application.'
+           }
         }
     }
 }
