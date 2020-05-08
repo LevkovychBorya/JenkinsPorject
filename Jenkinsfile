@@ -22,9 +22,10 @@ pipeline {
            steps {
                sh 'pwd'
                //sh ''
-               sh ' ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp'
-               sh ' ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp.war'
-               sh ' scp -i /home/ubuntu/.ssh/ssh.pem -r JavaApp ubuntu@172.17.0.3:webapps/'
+               //sh ' ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp'
+               //sh ' ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp.war'
+               //sh ' scp -i /home/ubuntu/.ssh/ssh.pem -r JavaApp ubuntu@172.17.0.3:webapps/'
+               sh 'echo there is no deploy'
            }
         }
     }
