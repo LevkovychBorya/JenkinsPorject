@@ -21,9 +21,11 @@ pipeline {
         stage('Deploy Stage') {
            steps {
                sh 'pwd'
-               sh 'sudo ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp'
-               sh 'sudo ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp.war'
-               sh 'sudo scp -i /home/ubuntu/.ssh/ssh.pem -r JavaApp ubuntu@172.17.0.3:webapps/'
+               //sh ''
+               //sh 'sudo ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp'
+               //sh 'sudo ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp.war'
+               //sh 'sudo scp -i /home/ubuntu/.ssh/ssh.pem -r JavaApp ubuntu@172.17.0.3:webapps/'
+	       sh 'rm -rf /Java && cp -r /var/jenkins_home/workspace/Java /Java'
            }
         }
     }
