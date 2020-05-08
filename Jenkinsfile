@@ -4,7 +4,7 @@ pipeline {
         pollSCM('* * * * *')
     }
     options {
-        buildDiscarder(logRotator(numToKeepStr: '1'))
+        buildDiscarder(logRotator(numToKeepStr: '5'))
         disableConcurrentBuilds()
     }
     stages {
@@ -20,7 +20,9 @@ pipeline {
         }
         stage('Deploy Stage') {
            steps {
-               echo 'Here Maven is going to deploy Java application.'
+               sh 'ssh ubuntu@52.28.1.54 rm -rf /opt/tomcat/webapps/JavaApp'
+               sh 'ssh ubuntu@52.28.1.54 rm -rf /opt/tomcat/webapps/JavaApp.war'
+               sh 'scp -r JavaApp ubuntu@52.28.1.54:/opt/tomcat/webapps/'
            }
         }
     }
