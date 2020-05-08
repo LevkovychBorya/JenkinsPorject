@@ -20,9 +20,9 @@ pipeline {
         }
         stage('Deploy Stage') {
            steps {
-               sh 'ssh ubuntu@52.28.1.54 rm -rf /opt/tomcat/webapps/JavaApp'
-               sh 'ssh ubuntu@52.28.1.54 rm -rf /opt/tomcat/webapps/JavaApp.war'
-               sh 'scp -r JavaApp ubuntu@52.28.1.54:/opt/tomcat/webapps/'
+               sh 'sudo ssh -i ../.ssh/ssh.pem ubuntu@52.28.1.54 rm -rf /opt/tomcat/webapps/JavaApp'
+               sh 'sudo ssh -i ../.ssh/ssh.pem ubuntu@52.28.1.54 rm -rf /opt/tomcat/webapps/JavaApp.war'
+               sh 'sudo scp -i ../.ssh/ssh.pem -r JavaApp ubuntu@52.28.1.54:/opt/tomcat/webapps/'
            }
         }
     }
