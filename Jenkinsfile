@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
     triggers {
         pollSCM('* * * * *')
     }
@@ -9,8 +9,11 @@ pipeline {
     }
     stages {
         stage('Build Stage') {
+            agent {
+                docker { image 'maven:3-alpine' }
+            }
             steps {
-                echo 'Here Maven is going to build Java application.'
+                sh 'mvn --version'
             }
         }
         stage('Test Stage') {
@@ -19,13 +22,11 @@ pipeline {
            }
         }
         stage('Deploy Stage') {
+           agent {
+                docker { image 'tomcat:9.0' }
+            }
            steps {
-               sh 'pwd'
-               //sh ''
-               //sh ' ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp'
-               //sh ' ssh -i /home/ubuntu/.ssh/ssh.pem ubuntu@172.17.0.3 rm -rf webapps/JavaApp.war'
-               //sh ' scp -i /home/ubuntu/.ssh/ssh.pem -r JavaApp ubuntu@172.17.0.3:webapps/'
-               sh 'echo there is no deploy'
+               sh 'ls -a'
            }
         }
     }
