@@ -1,17 +1,4 @@
-import os, sys, paramiko, time, getpass
-def startup():
-    os.system('sudo apt-get update')
-    os.system('sudo apt-get install openjdk-8-jdk -y')
-    os.system('sudo apt-get install unzip -y')
-    if "Terraform" in os.popen('terraform -v').read():
-        print("\nYou have already installed terraform\n")
-    else:
-        os.system('sudo wget https://releases.hashicorp.com/terraform/0.12.24/terraform_0.12.24_linux_amd64.zip')
-        os.system('unzip terraform_0.12.24_linux_amd64.zip')
-        os.system('rm terraform_0.12.24_linux_amd64.zip')
-        os.system('sudo mv terraform /bin/')
-    os.system('sudo apt-get install python3-pip')
-    os.system('sudo pip3 install paramiko')
+import os, sys, paramiko, time, getpass, urllib.request
 
 def AWS():
     KeyID = sys.argv[1]
@@ -31,9 +18,9 @@ def Terraform():
     ssh_key()
     credentials = AWS()
     os.system(credentials + ' && cd terraform && terraform init && terraform apply -auto-approve')
+    time.sleep(60)
 
 def ConfiguringInstance():
-    time.sleep(60)
     publicip = open("terraform/jenkins_public_ip", "r").read()
     publicip = publicip.rstrip('\n')
     client = paramiko.SSHClient()
@@ -44,20 +31,21 @@ def ConfiguringInstance():
     print(stdout.read().decode('utf-8'))
     stdin, stdout, stderr = client.exec_command('sudo apt-get install docker.io -y')
     print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo apt-get install openjdk-8-jdk -y')
+
+    ftp_client = client.open_sftp()
+    ftp_client.put("docker/Dockerfile", "Dockerfile")
+    stdin, stdout, stderr = client.exec_command('sudo docker build -t myjenkins .')
     print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -')
+    stdin, stdout, stderr = client.exec_command('sudo rm -rf Dockerfile')
     print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo sh -c "echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list"')
-    print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo apt-get update -y')
-    print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo apt-get install jenkins -y')
-    print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo docker pull tomcat:9.0')
-    print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo docker pull maven')
-    print(stdout.read().decode('utf-8'))
+    ftp_client.close()
+
+    stdin, stdout, stderr = client.exec_command('sudo docker container ls -a')
+    if "jenkins" in stdout.read().decode('utf-8'):
+        print("Jenkins already exist\n")
+    else:
+        stdin, stdout, stderr = client.exec_command('sudo docker run --name jenkins -d -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/usr/bin/docker -v jenkins_home:/var/jenkins_home -p 8080:8080 myjenkins')
+        print(stdout.read().decode('utf-8'))
 
     client.close()
 
@@ -68,17 +56,25 @@ def Jenkins():
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=publicip, username='ubuntu', key_filename='sshkey')
 
-    if os.path.isfile('jenkins-cli.jar'):
-        print("jenkins-cli.jar exists")
-    else:
-        os.system('sudo wget http://' + publicip + ':8080/jnlpJars/jenkins-cli.jar')
+    while True:
+        if os.path.isfile('jenkins-cli.jar'):
+            break
+        else:
+            try:
+                url = 'http://' + publicip + ':8080/jnlpJars/jenkins-cli.jar'
+                urllib.request.urlretrieve(url, "jenkins-cli.jar")
+                print("jenkins-cli.jar was downloaded\n")
+                break
+            except (urllib.request.URLError, urllib.request.HTTPError, ConnectionRefusedError, ValueError) as e:
+                continue
 
-    stdin, stdout, stderr = client.exec_command('sudo ls /var/lib/jenkins/secrets/')
+    stdin, stdout, stderr = client.exec_command('sudo docker exec jenkins ls /var/jenkins_home/secrets')
     if "initialAdminPassword" in stdout.read().decode('utf-8'):
-        stdin, stdout, stderr = client.exec_command('sudo cat /var/lib/jenkins/secrets/initialAdminPassword')
-        print("This is administrator password: " + stdout.read().decode('utf-8') + "Use it to unlock Jenkins")
+        print("Now go to this url and unlock Jenkins: http://" + publicip + ":8080\n")
+        stdin, stdout, stderr = client.exec_command('sudo docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword')
+        print("Use this administrator password to unlock Jenkins: " + stdout.read().decode('utf-8') + "\n")
     else:
-        print("Jenkins is already unlocked")
+        print("Jenkins is already unlocked\n")
 
     while True:
         login = input("Please input your Jenkins username : ")
@@ -86,11 +82,40 @@ def Jenkins():
         if "Authenticated" in os.popen('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 who-am-i').read():
             break
         else:
-            print("Wrong username or password try again")
+            print("\nWrong username or password try again\n")
             continue
-    print(login + password)
 
-startup()
+    while True:
+        githuburl = input("Please input your github repository URL : ")
+        githubbranch = input("Branch name (Nothing for master) : ") or "master"
+        scriptpath = input("And script path (Nothing for Jenkinsfile) : ") or "Jenkinsfile"
+
+        try:
+            request = urllib.request.Request(githuburl + "/tree/" + githubbranch + "/" + scriptpath)
+            request.get_method = lambda: 'HEAD'
+            urllib.request.urlopen(request)
+            conf = open("Job.xml", "r")
+            list_of_lines = conf.readlines()
+            list_of_lines[11] = "          <url>" + githuburl + "</url>\n"
+            list_of_lines[16] = "          <name>*/" + githubbranch + "</name>\n"
+            list_of_lines[23] = "    <scriptPath>" + scriptpath + "</scriptPath>\n"
+            conf = open("Job.xml", "w")
+            conf.writelines(list_of_lines)
+            conf.close()
+            break
+        except (urllib.request.URLError, urllib.request.HTTPError, ValueError) as e:
+            print("\nThere is no such url or branch or script path! Try again\n")
+            continue
+
+    if "JavaPipe" in os.popen('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 list-jobs').read():
+        os.system('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 update-job JavaPipe < Job.xml')
+    else:
+        os.system('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 create-job JavaPipe < Job.xml')
+    os.system('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 build JavaPipe')
+
+    print("\nDone! Pipeline was created and built!")
+
+#
 Terraform()
 ConfiguringInstance()
 Jenkins()
