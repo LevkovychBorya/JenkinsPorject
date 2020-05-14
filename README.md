@@ -8,4 +8,4 @@ To run the script you need to create aws user with secret key, have terraform, j
 Command to run the script: python setup.py << AWS_ACCESS_KEY_ID >> << AWS_SECRET_ACCESS_KEY >> << AWS_DEFAULT_REGION >> << GITHUB_URL >>
 << BRANCH >> << SCRIPT_PATH >> << USERNAME >> << PASSWORD >>
 
-Script is going to print out every output and also container id so you know they actually running. And when it's done it going to say so 👌.
+Script is going to print out every output and also container id so you know it's actually running. And when the script is done it's going to say so 👌.
