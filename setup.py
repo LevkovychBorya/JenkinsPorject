@@ -1,4 +1,4 @@
-import os, sys, paramiko, time, getpass, urllib.request
+import os, sys, paramiko, urllib.request
 
 def AWS():
     KeyID = sys.argv[1]
@@ -18,14 +18,18 @@ def Terraform():
     ssh_key()
     credentials = AWS()
     os.system(credentials + ' && cd terraform && terraform init && terraform apply -auto-approve')
-    time.sleep(60)
 
 def ConfiguringInstance():
     publicip = open("terraform/jenkins_public_ip", "r").read()
     publicip = publicip.rstrip('\n')
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(hostname=publicip, username='ubuntu', key_filename='sshkey')
+    while True:
+        try:
+            client.connect(hostname=publicip, username='ubuntu', key_filename='sshkey')
+            break
+        except (paramiko.ssh_exception.NoValidConnectionsError, ConnectionRefusedError) as e:
+            continue
 
     stdin, stdout, stderr = client.exec_command('sudo apt-get update')
     print(stdout.read().decode('utf-8'))
@@ -34,17 +38,21 @@ def ConfiguringInstance():
 
     ftp_client = client.open_sftp()
     ftp_client.put("docker/Dockerfile", "Dockerfile")
+    ftp_client.put("docker/default-user.groovy", "default-user.groovy")
     stdin, stdout, stderr = client.exec_command('sudo docker build -t myjenkins .')
     print(stdout.read().decode('utf-8'))
-    stdin, stdout, stderr = client.exec_command('sudo rm -rf Dockerfile')
+    stdin, stdout, stderr = client.exec_command('sudo rm -rf Dockerfile default-user.groovy')
     print(stdout.read().decode('utf-8'))
     ftp_client.close()
+
+    username = sys.argv[7]
+    password = sys.argv[8]
 
     stdin, stdout, stderr = client.exec_command('sudo docker container ls -a')
     if "jenkins" in stdout.read().decode('utf-8'):
         print("Jenkins already exist\n")
     else:
-        stdin, stdout, stderr = client.exec_command('sudo docker run --name jenkins -d -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/usr/bin/docker -v jenkins_home:/var/jenkins_home -p 8080:8080 myjenkins')
+        stdin, stdout, stderr = client.exec_command('sudo docker run -e JENKINS_USER=' + username + ' -e JENKINS_PASS=' + password + ' --name jenkins -d -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/usr/bin/docker -v jenkins_home:/var/jenkins_home -p 8080:8080 myjenkins')
         print(stdout.read().decode('utf-8'))
 
     client.close()
@@ -68,54 +76,35 @@ def Jenkins():
             except (urllib.request.URLError, urllib.request.HTTPError, ConnectionRefusedError, ValueError) as e:
                 continue
 
-    stdin, stdout, stderr = client.exec_command('sudo docker exec jenkins ls /var/jenkins_home/secrets')
-    if "initialAdminPassword" in stdout.read().decode('utf-8'):
-        print("Now go to this url and unlock Jenkins: http://" + publicip + ":8080\n")
-        stdin, stdout, stderr = client.exec_command('sudo docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword')
-        print("Use this administrator password to unlock Jenkins: " + stdout.read().decode('utf-8') + "\n")
+    githuburl = sys.argv[4]
+    githubbranch = sys.argv[5]
+    scriptpath = sys.argv[6]
+    username = sys.argv[7]
+    password = sys.argv[8]
+
+    try:
+        request = urllib.request.Request(githuburl + "/tree/" + githubbranch + "/" + scriptpath)
+        request.get_method = lambda: 'HEAD'
+        urllib.request.urlopen(request)
+        conf = open("Job.xml", "r")
+        list_of_lines = conf.readlines()
+        list_of_lines[11] = "          <url>" + githuburl + "</url>\n"
+        list_of_lines[16] = "          <name>*/" + githubbranch + "</name>\n"
+        list_of_lines[23] = "    <scriptPath>" + scriptpath + "</scriptPath>\n"
+        conf = open("Job.xml", "w")
+        conf.writelines(list_of_lines)
+        conf.close()
+    except (urllib.request.URLError, urllib.request.HTTPError, ValueError) as e:
+        print("\nThere is no such url or branch or script path! Try again\n")
+
+    if "JavaPipe" in os.popen('sudo java -jar jenkins-cli.jar -auth ' + username + ':' + password + ' -s http://' + publicip + ':8080 list-jobs').read():
+        os.system('sudo java -jar jenkins-cli.jar -auth ' + username + ':' + password + ' -s http://' + publicip + ':8080 update-job JavaPipe < Job.xml')
     else:
-        print("Jenkins is already unlocked\n")
-
-    while True:
-        login = input("Please input your Jenkins username : ")
-        password = getpass.getpass(prompt='And password: ')
-        if "Authenticated" in os.popen('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 who-am-i').read():
-            break
-        else:
-            print("\nWrong username or password try again\n")
-            continue
-
-    while True:
-        githuburl = input("Please input your github repository URL : ")
-        githubbranch = input("Branch name (Nothing for master) : ") or "master"
-        scriptpath = input("And script path (Nothing for Jenkinsfile) : ") or "Jenkinsfile"
-
-        try:
-            request = urllib.request.Request(githuburl + "/tree/" + githubbranch + "/" + scriptpath)
-            request.get_method = lambda: 'HEAD'
-            urllib.request.urlopen(request)
-            conf = open("Job.xml", "r")
-            list_of_lines = conf.readlines()
-            list_of_lines[11] = "          <url>" + githuburl + "</url>\n"
-            list_of_lines[16] = "          <name>*/" + githubbranch + "</name>\n"
-            list_of_lines[23] = "    <scriptPath>" + scriptpath + "</scriptPath>\n"
-            conf = open("Job.xml", "w")
-            conf.writelines(list_of_lines)
-            conf.close()
-            break
-        except (urllib.request.URLError, urllib.request.HTTPError, ValueError) as e:
-            print("\nThere is no such url or branch or script path! Try again\n")
-            continue
-
-    if "JavaPipe" in os.popen('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 list-jobs').read():
-        os.system('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 update-job JavaPipe < Job.xml')
-    else:
-        os.system('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 create-job JavaPipe < Job.xml')
-    os.system('sudo java -jar jenkins-cli.jar -auth ' + login + ':' + password + ' -s http://' + publicip + ':8080 build JavaPipe')
+        os.system('sudo java -jar jenkins-cli.jar -auth ' + username + ':' + password + ' -s http://' + publicip + ':8080 create-job JavaPipe < Job.xml')
+    os.system('sudo java -jar jenkins-cli.jar -auth ' + username + ':' + password + ' -s http://' + publicip + ':8080 build JavaPipe')
 
     print("\nDone! Pipeline was created and built!")
 
-#
 Terraform()
 ConfiguringInstance()
 Jenkins()
