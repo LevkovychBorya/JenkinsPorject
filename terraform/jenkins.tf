@@ -46,5 +46,5 @@ resource "aws_key_pair" "ssh_key" {
 
 variable "ami" {
   default = "ami-0b418580298265d5c"
-}
+} 
 
