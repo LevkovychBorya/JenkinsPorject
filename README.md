@@ -5,7 +5,7 @@ The example of repository that is going to be used for pipeline is on the Java b
 
 To run the script you need to create aws user with secret key, have terraform, java and python, install paramiko module and own a user that can run terraform.
 
-Command to run the script: python setup.py << AWS_ACCESS_KEY_ID >> << AWS_SECRET_ACCESS_KEY >> << AWS_DEFAULT_REGION >> << GITHUB_URL >>
+Command to run the script: python3 setup.py << AWS_ACCESS_KEY_ID >> << AWS_SECRET_ACCESS_KEY >> << AWS_DEFAULT_REGION >> << GITHUB_URL >>
 << BRANCH >> << SCRIPT_PATH >> << USERNAME >> << PASSWORD >>
 
 Script is going to print out every output and also container id so you know it's actually running. And when the script is done it's going to say so 👌.
