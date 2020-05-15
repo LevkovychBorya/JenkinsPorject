@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
     triggers {
         pollSCM('* * * * *')
     }
@@ -9,26 +9,26 @@ pipeline {
     }
     stages {
         stage('Build Stage') {
-			agent {
-                docker { image 'maven' }
-            }
             steps {
-                sh 'mvn --version'
+				sh 'sudo docker cp jenkins:/var/jenkins_home/workspace/JavaPipe /home/ubuntu/JavaPipe'
+                sh 'sudo docker run -it --rm --name maven -v "$(pwd)":/home/ubuntu/JavaPipe -w /home/ubuntu/JavaPipe maven:3.3-jdk-8 mvn build'
             }
         }
-        stage('Test Stage') {
-			agent {
-                docker { image 'tomcat:9.0' }
-            }
+		stage('Package Stage') {
            steps {
-               echo ' this is where docker keeps jenkins work /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe/JavaApp'
-               sh 'pwd'
-           }
-        }
+               sh 'sudo docker run -it --rm --name maven -v "$(pwd)":/home/ubuntu/JavaPipe -w /home/ubuntu/JavaPipe maven:3.3-jdk-8 mvn package'
+            }
+		}
+		stage('Create Stage') {
+           steps {
+               sh 'sudo docker run --name tomcat -d -p 80:8080 tomcat:9.0'
+            }
+		}
         stage('Deploy Stage') {
            steps {
-               sh 'ls -a'
-           }
-        }
+				sh 'sudo docker cp /home/ubuntu/JavaPipe/target/SampleServlet.war tomcat:/usr/local/tomcat/webapps'			
+			}
+		}
+ 
     }
 }
