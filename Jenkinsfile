@@ -26,7 +26,7 @@ pipeline {
             steps {
 				sh 'docker ps -q --filter "name=tomcat" | grep -q . && echo tomcatexists || docker run --name tomcat -d -p 80:8080 tomcat:9.0'
 				sh 'docker exec tomcat rm -rf /usr/local/tomcat/webapps/'	
-				sh 'docker cp /JavaPipe/target/SampleServlet.war tomcat:/usr/local/tomcat/webapps'			
+				sh 'docker cp /JavaPipe/target/PetStore.war tomcat:/usr/local/tomcat/webapps/'			
 			}
 		}
  

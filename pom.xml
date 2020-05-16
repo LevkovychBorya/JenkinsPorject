@@ -19,7 +19,7 @@
     </dependencies>
 
     <build>
-        <finalName>SampleServlet</finalName>
+        <finalName>PetStore</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
