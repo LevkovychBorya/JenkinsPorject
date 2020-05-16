@@ -18,7 +18,7 @@ pipeline {
 				sh 'echo "${pwd}" '
 				sh "echo '\$(pwd)' "
 		     // sh "echo '${pwd}' "
-				sh "echo '$(!pwd)' "
+			 // sh "echo '$(!pwd)' "
                 sh 'docker run -it --rm --name maven -v "\$(pwd)":/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn build'
             }
         }
