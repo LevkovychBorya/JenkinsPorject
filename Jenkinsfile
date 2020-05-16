@@ -11,8 +11,8 @@ pipeline {
         stage('Build Stage') {
             steps {
 			//	sh 'pwd'
-				sh 'docker cp jenkins:/var/jenkins_home/workspace/JavaPipe /JavaPipe'
-                sh "docker run --rm --name maven -v '\$(pwd)':/JavaPipe -w /JavaPipe maven:3.3-jdk-8 mvn build"
+			//	sh 'docker cp jenkins:/var/jenkins_home/workspace/JavaPipe /home/ubuntu/JavaPipe'
+                sh "docker run --rm --name maven -v '\$(pwd)':/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn build"
             }
         }
 		stage('Package Stage') {
