@@ -8,24 +8,25 @@ pipeline {
         disableConcurrentBuilds()
     }
     stages {
-        stage('Build Stage') {
+        stage('Compile Stage') {
             steps {
-                sh "docker run --rm --name maven -v '\$(pwd)':/var/jenkins_home/workspace/JavaPipe -w /var/jenkins_home/workspace/JavaPipe maven:3.3-jdk-8 mvn build"
+				sh 'sudo apt-get update'
+				sh 'sudo apt-get install maven -y'
+                sh 'rm -rf /JavaPipe'
+				sh 'cp /var/jenkins_home/workspace/JavaPipe /JavaPipe'
+				sh 'cd /JavaPipe && mvn compile '
             }
         }
 		stage('Package Stage') {
             steps {
-                sh "docker run --rm --name maven -v '\$(pwd)':/home/ubuntu/JavaPipe -w /home/ubuntu/JavaPipe maven:3.3-jdk-8 mvn package"
-            }
-		}
-		stage('Create Stage') {
-            steps {
-                sh 'docker run --name tomcat -d -p 80:8080 tomcat:9.0'
+                sh 'cd /JavaPipe && mvn package'
             }
 		}
         stage('Deploy Stage') {
             steps {
-				sh 'docker cp /home/ubuntu/JavaPipe/target/SampleServlet.war tomcat:/usr/local/tomcat/webapps'			
+				sh '[ ! "$(docker ps -a | grep tomcat)" ] && docker run --name tomcat -d -p 80:8080 tomcat:9.0'
+				sh 'docker exec tomcat rm -rf /usr/local/tomcat/webapps/'	
+				sh 'docker cp /JavaPipe/target/SampleServlet.war tomcat:/usr/local/tomcat/webapps'			
 			}
 		}
  
