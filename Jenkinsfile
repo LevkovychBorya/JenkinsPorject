@@ -13,7 +13,7 @@ pipeline {
 				sh 'sudo apt-get update'
 				sh 'sudo apt-get install maven -y'
                 sh 'rm -rf /JavaPipe'
-				sh 'cp /var/jenkins_home/workspace/JavaPipe /JavaPipe'
+				sh 'cp -r /var/jenkins_home/workspace/JavaPipe /JavaPipe'
 				sh 'cd /JavaPipe && mvn compile '
             }
         }
