@@ -12,12 +12,12 @@ pipeline {
             steps {
 				sh 'pwd'
 				sh 'ls'
-                sh 'docker run -it --rm --name maven -v '$(!pwd)':/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn build'
+                sh 'docker run -it --rm --name maven -v "$(pwd)":/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn build'
             }
         }
 		stage('Package Stage') {
             steps {
-                sh 'docker run -it --rm --name maven -v '$(!pwd)':/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn package'
+                sh 'docker run -it --rm --name maven -v "$(pwd)":/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn package'
             }
 		}
 		stage('Create Stage') {
