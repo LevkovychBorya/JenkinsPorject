@@ -13,7 +13,7 @@ import java.util.List;
 
 @WebServlet(
         name = "selectspeciesservlet",
-        urlPatterns = "/SelectSpecies"
+        urlPatterns = "/SelectPet"
 )
 
 public class SelectSpeciesServlet extends HttpServlet {
