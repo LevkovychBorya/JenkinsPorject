@@ -10,14 +10,13 @@ pipeline {
     stages {
         stage('Build Stage') {
             steps {
-			//	sh 'pwd'
-			//	sh 'docker cp jenkins:/var/jenkins_home/workspace/JavaPipe /home/ubuntu/JavaPipe'
-                sh "docker run --rm --name maven -v '\$(pwd)':/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn build"
+				sh 'docker cp jenkins:/var/jenkins_home/workspace/JavaPipe /home/ubuntu/JavaPipe'
+                sh "docker run --rm --name maven -v '\$(pwd)':/home/ubuntu/JavaPipe -w /home/ubuntu/JavaPipe maven:3.3-jdk-8 mvn build"
             }
         }
 		stage('Package Stage') {
             steps {
-                sh "docker run --rm --name maven -v '\$(pwd)':/var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe -w /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe maven:3.3-jdk-8 mvn package"
+                sh "docker run --rm --name maven -v '\$(pwd)':/home/ubuntu/JavaPipe -w /home/ubuntu/JavaPipe maven:3.3-jdk-8 mvn package"
             }
 		}
 		stage('Create Stage') {
@@ -27,7 +26,7 @@ pipeline {
 		}
         stage('Deploy Stage') {
             steps {
-				sh 'docker cp /var/lib/docker/volumes/jenkins_home/_data/workspace/JavaPipe/target/SampleServlet.war tomcat:/usr/local/tomcat/webapps'			
+				sh 'docker cp /home/ubuntu/JavaPipe/target/SampleServlet.war tomcat:/usr/local/tomcat/webapps'			
 			}
 		}
  
