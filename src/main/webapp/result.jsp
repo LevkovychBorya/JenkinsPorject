@@ -1,5 +1,5 @@
-<%@ page import ="java.util.*" %>
 <link href="css/style.css" rel="stylesheet">
+<%@ page import ="java.util.*" %>
 <!DOCTYPE html>
 <html>
 <body>
