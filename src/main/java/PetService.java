@@ -13,18 +13,18 @@ public class PetService {
         List pets = new ArrayList();
 
         if(type.equals(Species.CAT)){
-            pets.add("Adrianna Vineyard");
-            pets.add(("J. P. Chenet"));
+            pets.add("Name: Tom | Age: 5 | Sex: M ");
+            pets.add("Name: Lucy| Age: 2 | Sex: F ");
 
         }else if(type.equals(Species.DOG)){
-            pets.add("Glenfiddich");
-            pets.add("Johnnie Walker");
+            pets.add("Name: Barkley | Age: 4 | Sex: M ");
+            pets.add("Name: Zoey    | Age: 8 | Sex: F ");
 
         }else if(type.equals(Species.FISH)){
-            pets.add("Corona");
+            pets.add("Name: Alex | Age: 3m | Sex: ~ ");
 
         }else {
-            pets.add("No Brand Available");
+            pets.add("No Pets Available");
         }
         return pets;
     }
