@@ -13,6 +13,8 @@ Iterator it = result.iterator();
 out.println("<br>We have<br><br>");
 while(it.hasNext()){
 out.println(it.next()+"<br>");
+
+<img src="toimage?imageId=<%= image.getId() %>" height="100px" width="100px" />
 }
 %>
 </body>
